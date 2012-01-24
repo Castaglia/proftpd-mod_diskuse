@@ -1,0 +1,4 @@
+The mod_diskuse module for ProFTPD provides a way to block uploads if
+the total amount of disk used is over a configurable amount.
+
+For further module documentation, see mod_diskuse.html.
