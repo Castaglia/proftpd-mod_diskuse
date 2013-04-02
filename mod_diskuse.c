@@ -1,7 +1,7 @@
 /*
  * ProFTPD: mod_diskuse -- a module for refusing uploads based on disk usage
  *
- * Copyright (c) 2002-2011 TJ Saunders
+ * Copyright (c) 2002-2013 TJ Saunders
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,6 +52,8 @@
 #endif
 
 #define MOD_DISKUSE_VERSION		"mod_diskuse/0.9"
+
+module diskuse_module;
 
 static unsigned char have_max_diskuse = FALSE;
 static double min_diskfree = 0.0;
