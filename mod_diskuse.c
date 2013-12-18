@@ -287,6 +287,7 @@ MODRET diskuse_pre_stor(cmd_rec *cmd) {
       cmd->argv[0], session.user, (1.0 - min_diskfree),
       (1.0 - current_diskfree));
     pr_response_add_err(R_552, _("Insufficient disk space"));
+    errno = ENOSPC;
     return PR_ERROR(cmd);
   }
 
