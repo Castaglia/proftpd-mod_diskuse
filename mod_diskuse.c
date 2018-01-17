@@ -1,7 +1,6 @@
 /*
  * ProFTPD: mod_diskuse -- a module for refusing uploads based on disk usage
- *
- * Copyright (c) 2002-2013 TJ Saunders
+ * Copyright (c) 2002-2018 TJ Saunders
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA 02110-1335, USA.
  *
  * As a special exemption, TJ Saunders gives permission to link this program
  * with OpenSSL, and distribute the resulting executable, without including
@@ -23,16 +22,16 @@
  *
  * This is mod_diskuse, contrib software for proftpd 1.2 and above.
  * For more information contact TJ Saunders <tj@castaglia.org>.
- *
- * $Id: mod_diskuse.c,v 1.7 2011/01/18 19:13:09 tj Exp tj $
  */
 
 #include "conf.h"
 #include "mod_diskuse.h"
 
+#define MOD_DISKUSE_VERSION		"mod_diskuse/0.9"
+
 /* Make sure the version of proftpd is as necessary. */
-#if PROFTPD_VERSION_NUMBER < 0x0001030201
-# error "ProFTPD 1.3.2rc1 or later required"
+#if PROFTPD_VERSION_NUMBER < 0x0001030602
+# error "ProFTPD 1.3.6rc2 or later required"
 #endif
 
 #if defined(HAVE_SYS_PARAM_H)
@@ -50,8 +49,6 @@
 #if defined(HAVE_SYS_STATVFS_H)
 # include <sys/statvfs.h>
 #endif
-
-#define MOD_DISKUSE_VERSION		"mod_diskuse/0.9"
 
 module diskuse_module;
 
@@ -114,7 +111,7 @@ static void lookup_min_diskfree(void) {
 
     if (c->argc == 4) {
       if (strcmp(c->argv[2], "user") == 0) {
-        if (pr_user_or_expression((char **) &c->argv[3])) {
+        if (pr_expr_eval_user_or((char **) &c->argv[3])) {
           min_diskfree = *((double *) c->argv[1]);
           have_max_diskuse = TRUE;
 
@@ -128,7 +125,7 @@ static void lookup_min_diskfree(void) {
         }
 
       } else if (strcmp(c->argv[2], "group") == 0) {
-        if (pr_group_and_expression((char **) &c->argv[3])) {
+        if (pr_expr_eval_group_and((char **) &c->argv[3])) {
           min_diskfree = *((double *) c->argv[1]);
           have_max_diskuse = TRUE;
 
@@ -142,7 +139,7 @@ static void lookup_min_diskfree(void) {
         }
 
       } else if (strcmp(c->argv[2], "class") == 0) {
-        if (pr_class_or_expression((char **) &c->argv[3])) {
+        if (pr_expr_eval_class_or((char **) &c->argv[3])) {
           min_diskfree = *((double *) c->argv[1]);
           have_max_diskuse = TRUE;
 
@@ -233,9 +230,9 @@ MODRET set_maxdiskusage(cmd_rec *cmd) {
   } else {
     array_header *acl = NULL;
     int argc = cmd->argc - 3;
-    char **argv = cmd->argv + 2;
+    char **argv = ((char **) cmd->argv) + 2;
 
-    acl = pr_parse_expression(cmd->tmp_pool, &argc, argv);
+    acl = pr_expr_create(cmd->tmp_pool, &argc, argv);
 
     c = add_config_param(cmd->argv[0], 0);
     c->argc = argc + 3;
@@ -246,7 +243,7 @@ MODRET set_maxdiskusage(cmd_rec *cmd) {
     *argv++ = pstrdup(c->pool, cmd->argv[1]);
 
     *argv = pcalloc(c->pool, sizeof(double));
-    *((double *) *argv++) = diskfree;
+    *((double *) *argv++) = (double) diskfree;
 
     *argv++ = pstrdup(c->pool, cmd->argv[2]);
 
