@@ -1,4 +1,7 @@
 doc
+Makefile
+config.log
+config.status
 tests.log
 .libs
 .*.swp
