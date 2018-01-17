@@ -22,8 +22,12 @@ script:
   # - find . -type f -name "*.c" -print | grep -v t\/ | xargs cppcheck 2>&1
   # - find . -type f -name "*.c" -print | grep -v t\/ | xargs rats --language=c
   - git clone --depth 10 https://github.com/proftpd/proftpd.git
-  - cp mod_diskuse.c proftpd/contrib/
-  - cp mod_diskuse.h.in proftpd/contrib/
+  - mkdir -p proftpd/contrib/mod_diskuse/
+  - cp mod_diskuse.c proftpd/contrib/mod_diskuse/
+  - cp mod_diskuse.h.in proftpd/contrib/mod_diskuse/
+  - cp Makefile.in proftpd/contrib/mod_diskuse/
+  - cp config* proftpd/contrib/mod_diskuse/
+  - cp install-sh proftpd/contrib/mod_diskuse/
   - cd proftpd
   - ./configure LIBS='-lm -lrt -pthread' --enable-devel=coverage --enable-dso --enable-tests --with-shared=mod_diskuse
   - make
