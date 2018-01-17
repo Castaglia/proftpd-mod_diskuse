@@ -229,7 +229,7 @@ MODRET set_maxdiskusage(cmd_rec *cmd) {
 
   } else {
     array_header *acl = NULL;
-    int argc = cmd->argc - 3;
+    unsigned int argc = cmd->argc - 3;
     char **argv = ((char **) cmd->argv) + 2;
 
     acl = pr_expr_create(cmd->tmp_pool, &argc, argv);
@@ -243,7 +243,7 @@ MODRET set_maxdiskusage(cmd_rec *cmd) {
     *argv++ = pstrdup(c->pool, cmd->argv[1]);
 
     *argv = pcalloc(c->pool, sizeof(double));
-    *((double *) *argv++) = (double) diskfree;
+    *((double *) *argv++) = diskfree;
 
     *argv++ = pstrdup(c->pool, cmd->argv[2]);
 
