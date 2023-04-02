@@ -1,6 +1,6 @@
 /*
  * ProFTPD: mod_diskuse -- a module for refusing uploads based on disk usage
- * Copyright (c) 2002-2018 TJ Saunders
+ * Copyright (c) 2002-2023 TJ Saunders
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -281,7 +281,7 @@ MODRET diskuse_pre_stor(cmd_rec *cmd) {
       current_diskfree < min_diskfree) {
     pr_log_pri(PR_LOG_NOTICE, MOD_DISKUSE_VERSION
       ": %s denied to user %s (max usage %f, currently %f)",
-      cmd->argv[0], session.user, (1.0 - min_diskfree),
+      (char *) cmd->argv[0], session.user, (1.0 - min_diskfree),
       (1.0 - current_diskfree));
     pr_response_add_err(R_552, _("Insufficient disk space"));
     errno = ENOSPC;
