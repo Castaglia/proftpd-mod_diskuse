@@ -195,7 +195,7 @@ MODRET set_maxdiskusage(cmd_rec *cmd) {
 
     } else {
       CONF_ERROR(cmd, pstrcat(cmd->tmp_pool, "unknown classifier used: '",
-        cmd->argv[2], "'", NULL)); 
+        cmd->argv[2], "'", NULL));
     }
   }
 
