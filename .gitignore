@@ -1,7 +1,9 @@
 doc
 Makefile
+autom4te.cache
 config.log
 config.status
+mod_diskuse.h
 tests.log
 .libs
 .*.swp
