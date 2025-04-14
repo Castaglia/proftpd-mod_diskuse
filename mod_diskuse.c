@@ -1,6 +1,6 @@
 /*
  * ProFTPD: mod_diskuse -- a module for refusing uploads based on disk usage
- * Copyright (c) 2002-2023 TJ Saunders
+ * Copyright (c) 2002-2025 TJ Saunders
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@
 #include "conf.h"
 #include "mod_diskuse.h"
 
-#define MOD_DISKUSE_VERSION		"mod_diskuse/0.9"
+#define MOD_DISKUSE_VERSION		"mod_diskuse/0.9.1"
 
 /* Make sure the version of proftpd is as necessary. */
 #if PROFTPD_VERSION_NUMBER < 0x0001030602
@@ -60,8 +60,11 @@ static double current_diskfree = 0.0;
  */
 
 static void lookup_current_diskfree(const char *path) {
-#if defined(HAVE_SYS_STATVFS_H) || defined(HAVE_SYS_VFS_H) || defined(HAVE_STATFS)
-  char *tmp = NULL;
+#if defined(HAVE_SYS_STATVFS_H) || \
+    defined(HAVE_SYS_VFS_H) || \
+    defined(HAVE_STATFS)
+  char *ptr = NULL;
+  int res, xerrno;
 
 # if defined(HAVE_SYS_STATVFS_H)
   struct statvfs fsbuf;
@@ -72,23 +75,26 @@ static void lookup_current_diskfree(const char *path) {
 # endif
 
   /* backtrack up the path name to find the parent directory */
-  tmp = strrchr(path, '/');
-  if (tmp == NULL) {
+  ptr = strrchr(path, '/');
+  if (ptr == NULL) {
     pr_log_debug(DEBUG0, MOD_DISKUSE_VERSION ": no slash in path '%s'", path);
 
   } else {
-    *++tmp = '\0';
+    *++ptr = '\0';
   }
 
 # if defined(HAVE_SYS_STATVFS_H)
-  if (statvfs(path, &fsbuf) < 0) {
+  res = statvfs(path, &fsbuf);
 # elif defined(HAVE_SYS_VFS_H)
-  if (statfs(path, &fsbuf) < 0) {
+  res = statfs(path, &fsbuf);
 # elif defined(HAVE_STATFS)
-  if (statfs(path, &fsbuf) < 0) {
+  res = statfs(path, &fsbuf);
 # endif
+  xerrno = errno;
+
+  if (res < 0) {
     pr_log_debug(DEBUG2, MOD_DISKUSE_VERSION ": unable to stat fs '%s': %s",
-      path, strerror(errno));
+      path, strerror(xerrno));
     current_diskfree = -1.0;
 
   } else {
@@ -103,11 +109,13 @@ static void lookup_min_diskfree(void) {
   config_rec *c = NULL;
 
   /* No need to lookup the limit again */
-  if (have_max_diskuse)
+  if (have_max_diskuse == TRUE) {
     return;
+  }
 
   c = find_config(TOPLEVEL_CONF, CONF_PARAM, "MaxDiskUsage", FALSE);
-  while (c) {
+  while (c != NULL) {
+    pr_signals_handle();
 
     if (c->argc == 4) {
       if (strcmp(c->argv[2], "user") == 0) {
@@ -173,7 +181,8 @@ static void lookup_min_diskfree(void) {
  */
 
 MODRET set_maxdiskusage(cmd_rec *cmd) {
-#if defined(HAVE_STATFS) || defined(HAVE_STATVFS)
+#if defined(HAVE_STATFS) || \
+    defined(HAVE_STATVFS)
   config_rec *c = NULL;
   double diskuse = 0.0, diskfree = 0.0;
   char *endp = NULL;
@@ -272,7 +281,6 @@ MODRET set_maxdiskusage(cmd_rec *cmd) {
  */
 
 MODRET diskuse_pre_stor(cmd_rec *cmd) {
-
   lookup_min_diskfree();
   lookup_current_diskfree(dir_canonical_vpath(cmd->tmp_pool, cmd->arg));
 
@@ -306,7 +314,6 @@ static void diskuse_mod_unload_ev(const void *event_data, void *user_data) {
  */
 
 static int diskuse_init(void) {
-
 #if defined(PR_SHARED_MODULE)
   pr_event_register(&diskuse_module, "core.module-unload",
     diskuse_mod_unload_ev, NULL);
